@@ -168,10 +168,6 @@ private struct UsageSummaryView: View {
                 label: "WORDS DICTATED"
             )
 
-            Rectangle()
-                .fill(Theme.divider)
-                .frame(width: 1, height: 38)
-
             UsageMetric(
                 value: effectiveWPM,
                 label: "EFFECTIVE WPM"
