@@ -757,7 +757,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startEditMonitoring(pastedText: String) {
         stopEditMonitoring()
 
-        guard AXIsProcessTrusted(),
+        guard dictionary.isEnabled,
+              AXIsProcessTrusted(),
               let frontApp = NSWorkspace.shared.frontmostApplication else { return }
 
         let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
@@ -788,6 +789,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func finalizeEditMonitoring() {
+        guard dictionary.isEnabled else {
+            stopEditMonitoring()
+            return
+        }
+
         guard let element = monitoredElement, let originalText = lastPastedText else {
             stopEditMonitoring()
             return
