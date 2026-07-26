@@ -72,6 +72,17 @@ permission to `/Applications/OpenWhispr.app`. Later development builds signed by
 the same certificate keep the same macOS code identity, so the permission should
 persist.
 
+For signed builds launched directly from Xcode, create your local signing
+configuration:
+
+```bash
+cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
+```
+
+Replace `YOUR_TEAM_ID` in the copied file with your Apple development team ID.
+The local file is ignored by Git so contributors do not overwrite each other's
+signing settings.
+
 Set `OPENWHISPR_SIGNING_IDENTITY` to a certificate fingerprint to choose a
 specific identity, or `OPENWHISPR_INSTALL_DIR` to use an installation directory
 other than `/Applications`.

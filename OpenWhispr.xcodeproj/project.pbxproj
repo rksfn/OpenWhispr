@@ -64,6 +64,8 @@
 		B10019 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10020 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B20001 /* HistoryStoreUsageStatisticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStoreUsageStatisticsTests.swift; sourceTree = "<group>"; };
+		B30001 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		B30002 /* Signing.local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.local.xcconfig.example; sourceTree = "<group>"; };
 		C10001 /* OpenWhispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWhispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C20001 /* OpenWhisprTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenWhisprTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -93,6 +95,7 @@
 			children = (
 				G10002 /* OpenWhispr */,
 				G20001 /* OpenWhisprTests */,
+				G30001 /* Config */,
 				G10003 /* Products */,
 				BD09B54D2F5A76CE0041206C /* qwen3-0.6b-q4_k_m.gguf */,
 			);
@@ -140,6 +143,15 @@
 				B20001 /* HistoryStoreUsageStatisticsTests.swift */,
 			);
 			path = OpenWhisprTests;
+			sourceTree = "<group>";
+		};
+		G30001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				B30001 /* Signing.xcconfig */,
+				B30002 /* Signing.local.xcconfig.example */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -307,6 +319,7 @@
 		};
 		X10D02 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B30001 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
@@ -354,6 +367,7 @@
 		};
 		X10R02 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B30001 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
