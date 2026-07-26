@@ -10,7 +10,6 @@ struct MainAppView: View {
         if onboardingMode {
             OnboardingView(onComplete: onOnboardingComplete)
                 .background(Theme.bg)
-                .preferredColorScheme(.light)
         } else {
             HStack(spacing: 0) {
                 SidebarView(selection: $selection)
@@ -33,7 +32,6 @@ struct MainAppView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.bg)
             }
-            .preferredColorScheme(.light)
         }
     }
 }

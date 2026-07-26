@@ -125,6 +125,5 @@ struct OnboardingView: View {
         }
         .frame(width: 440, height: 500)
         .background(Theme.bg)
-        .preferredColorScheme(.light)
     }
 }

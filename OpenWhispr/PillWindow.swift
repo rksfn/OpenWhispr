@@ -171,6 +171,7 @@ class PillStateModel: ObservableObject {
 
 struct PillView: View {
     @ObservedObject var state: PillStateModel
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Group {
@@ -203,16 +204,16 @@ struct PillView: View {
         }
     }
 
-    // Tiny translucent bar when idle — highlights on hover
+    // A visible neutral handle at rest, independent of the desktop appearance.
     private var idlePill: some View {
         Capsule()
-            .fill(.white.opacity(state.isHovered ? 0.4 : 0.15))
+            .fill(PillTheme.idleSurface(for: colorScheme, isHovered: state.isHovered))
             .overlay(
                 Capsule()
-                    .strokeBorder(.white.opacity(state.isHovered ? 0.3 : 0), lineWidth: 1)
+                    .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
             )
-            .frame(width: 32, height: 5)
-            .padding(.top, 1.5)
+            .frame(width: 32, height: 6)
+            .padding(.top, 1)
             .animation(.easeInOut(duration: 0.15), value: state.isHovered)
             .onHover { hovering in
                 state.isHovered = hovering
@@ -230,7 +231,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 220, height: 32)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var recordingPill: some View {
@@ -248,7 +249,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var recordingLockedPill: some View {
@@ -266,7 +267,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var recordingSummarizePill: some View {
@@ -284,7 +285,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var recordingQuestionPill: some View {
@@ -302,7 +303,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var recordingLockedSummarizePill: some View {
@@ -320,7 +321,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var processingPill: some View {
@@ -334,7 +335,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 160, height: 32)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private var polishingPill: some View {
@@ -348,7 +349,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 140, height: 32)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private func errorPill(message: String) -> some View {
@@ -363,7 +364,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 280, height: 32)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private func learnedPill(message: String) -> some View {
@@ -378,7 +379,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 260, height: 32)
-        .background(.ultraThinMaterial, in: Capsule())
+        .pillChrome(colorScheme)
     }
 
     private func answerPill(message: String) -> some View {
@@ -404,12 +405,59 @@ struct PillView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(width: 360)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(PillTheme.surface(for: colorScheme), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
+        )
     }
 
     private func barHeight(for level: Float) -> CGFloat {
         let min: CGFloat = 3
         let max: CGFloat = 22
         return min + CGFloat(level) * (max - min)
+    }
+}
+
+private enum PillTheme {
+    static func surface(for colorScheme: ColorScheme) -> Color {
+        colorScheme == .dark
+            ? Color(red: 0.227, green: 0.224, blue: 0.212) // lifted charcoal on dark desktops
+            : Color(red: 0.145, green: 0.145, blue: 0.133) // deep charcoal on light desktops
+    }
+
+    static func idleSurface(for colorScheme: ColorScheme, isHovered: Bool) -> Color {
+        if colorScheme == .dark {
+            return isHovered
+                ? Color(red: 0.69, green: 0.68, blue: 0.64)
+                : Color(red: 0.55, green: 0.54, blue: 0.51)
+        }
+        return isHovered
+            ? Color(red: 0.43, green: 0.43, blue: 0.40)
+            : Color(red: 0.34, green: 0.34, blue: 0.32)
+    }
+
+    static func border(for colorScheme: ColorScheme) -> Color {
+        .white.opacity(colorScheme == .dark ? 0.22 : 0.14)
+    }
+}
+
+private extension View {
+    func pillChrome(_ colorScheme: ColorScheme) -> some View {
+        background(PillTheme.surface(for: colorScheme), in: Capsule())
+            .overlay(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [.white.opacity(0.09), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
+            )
     }
 }

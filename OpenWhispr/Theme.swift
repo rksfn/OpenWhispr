@@ -1,11 +1,26 @@
+import AppKit
 import SwiftUI
 
 enum Theme {
-    static let bg = Color(red: 0.98, green: 0.98, blue: 0.973)            // #FAFAF8
-    static let sidebarBg = Color(red: 0.961, green: 0.957, blue: 0.941)   // #F5F4F0
-    static let sidebarSel = Color(red: 0.929, green: 0.914, blue: 0.871)  // #EDE9DE
-    static let text = Color(red: 0.102, green: 0.102, blue: 0.102)        // #1A1A1A
-    static let textSecondary = Color(red: 0.549, green: 0.549, blue: 0.549) // #8C8C8C
-    static let divider = Color(red: 0.91, green: 0.902, blue: 0.878)      // #E8E6E0
-    static let fieldBg = Color(red: 0.961, green: 0.957, blue: 0.941)     // #F5F4F0
+    static let bg = adaptive(light: 0xF8F7F4, dark: 0x171716)
+    static let sidebarBg = adaptive(light: 0xF0EFEB, dark: 0x20201E)
+    static let sidebarSel = adaptive(light: 0xE5E2DA, dark: 0x34332F)
+    static let text = adaptive(light: 0x1B1B1A, dark: 0xF4F3EF)
+    static let textSecondary = adaptive(light: 0x72716D, dark: 0xAAA8A1)
+    static let divider = adaptive(light: 0xE2E0DA, dark: 0x373632)
+    static let fieldBg = adaptive(light: 0xEFEEE9, dark: 0x292825)
+
+    private static func adaptive(light: UInt32, dark: UInt32) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let value = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? dark
+                : light
+            return NSColor(
+                red: CGFloat((value >> 16) & 0xFF) / 255,
+                green: CGFloat((value >> 8) & 0xFF) / 255,
+                blue: CGFloat(value & 0xFF) / 255,
+                alpha: 1
+            )
+        })
+    }
 }

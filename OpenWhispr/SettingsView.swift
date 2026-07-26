@@ -392,6 +392,5 @@ struct SettingsView: View {
         }
         .frame(width: 420, height: 620)
         .background(Theme.bg)
-        .preferredColorScheme(.light)
     }
 }

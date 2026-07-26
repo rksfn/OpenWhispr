@@ -75,8 +75,6 @@ class UnifiedWindowController {
         p.hidesOnDeactivate = false
         p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         p.isReleasedWhenClosed = false
-        p.appearance = NSAppearance(named: .aqua)
-
         panel = p
     }
 }

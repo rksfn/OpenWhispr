@@ -273,6 +273,5 @@ struct HistoryPopupView: View {
         }
         .frame(width: 360, height: 400)
         .background(Theme.bg)
-        .preferredColorScheme(.light)
     }
 }
