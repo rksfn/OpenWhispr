@@ -63,6 +63,10 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            UsageSummaryView(statistics: store.usageStatistics)
+
+            Rectangle().fill(Theme.divider).frame(height: 1)
+
             // Search bar
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
@@ -142,6 +146,64 @@ struct HistoryView: View {
     private func copyToClipboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+}
+
+// MARK: - Usage summary
+
+private struct UsageSummaryView: View {
+    let statistics: UsageStatistics
+
+    private var effectiveWPM: String {
+        guard let wordsPerMinute = statistics.effectiveWordsPerMinute else {
+            return "Learning…"
+        }
+        return Int(wordsPerMinute.rounded()).formatted()
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            UsageMetric(
+                value: statistics.totalWords.formatted(),
+                label: "WORDS DICTATED"
+            )
+
+            Rectangle()
+                .fill(Theme.divider)
+                .frame(width: 1, height: 38)
+
+            UsageMetric(
+                value: effectiveWPM,
+                label: "EFFECTIVE WPM"
+            )
+            .help(
+                statistics.effectiveWordsPerMinute == nil
+                    ? "Available after 500 dictated words"
+                    : "Final output words divided by recording time"
+            )
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 15)
+    }
+}
+
+private struct UsageMetric: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(value)
+                .font(.system(size: 21, weight: .semibold, design: .rounded))
+                .foregroundColor(Theme.text)
+                .lineLimit(1)
+
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(Theme.textSecondary)
+                .tracking(0.5)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

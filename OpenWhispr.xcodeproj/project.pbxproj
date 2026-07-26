@@ -28,7 +28,18 @@
 		BD09B54E2F5A76CE0041206C /* qwen3-0.6b-q4_k_m.gguf in Resources */ = {isa = PBXBuildFile; fileRef = BD09B54D2F5A76CE0041206C /* qwen3-0.6b-q4_k_m.gguf */; };
 		A10019 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10019 /* Assets.xcassets */; };
 		A10020 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10020 /* Theme.swift */; };
+		A20001 /* HistoryStoreUsageStatisticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HistoryStoreUsageStatisticsTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CP20001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = P10001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = T10001;
+			remoteInfo = OpenWhispr;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		B10001 /* OpenWhisprApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenWhisprApp.swift; sourceTree = "<group>"; };
@@ -52,7 +63,9 @@
 		BD09B54D2F5A76CE0041206C /* qwen3-0.6b-q4_k_m.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "qwen3-0.6b-q4_k_m.gguf"; sourceTree = "<group>"; };
 		B10019 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10020 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B20001 /* HistoryStoreUsageStatisticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStoreUsageStatisticsTests.swift; sourceTree = "<group>"; };
 		C10001 /* OpenWhispr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenWhispr.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C20001 /* OpenWhisprTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenWhisprTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +78,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F20001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -72,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				G10002 /* OpenWhispr */,
+				G20001 /* OpenWhisprTests */,
 				G10003 /* Products */,
 				BD09B54D2F5A76CE0041206C /* qwen3-0.6b-q4_k_m.gguf */,
 			);
@@ -108,8 +129,17 @@
 			isa = PBXGroup;
 			children = (
 				C10001 /* OpenWhispr.app */,
+				C20001 /* OpenWhisprTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		G20001 /* OpenWhisprTests */ = {
+			isa = PBXGroup;
+			children = (
+				B20001 /* HistoryStoreUsageStatisticsTests.swift */,
+			);
+			path = OpenWhisprTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -136,6 +166,23 @@
 			productReference = C10001 /* OpenWhispr.app */;
 			productType = "com.apple.product-type.application";
 		};
+		T20001 /* OpenWhisprTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = X20003 /* Build configuration list for PBXNativeTarget "OpenWhisprTests" */;
+			buildPhases = (
+				S20001 /* Sources */,
+				F20001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				TD20001 /* PBXTargetDependency */,
+			);
+			name = OpenWhisprTests;
+			productName = OpenWhisprTests;
+			productReference = C20001 /* OpenWhisprTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -145,6 +192,12 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
 				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					T20001 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = T10001;
+					};
+				};
 			};
 			buildConfigurationList = X10001 /* Build configuration list for PBXProject "OpenWhispr" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -164,6 +217,7 @@
 			projectRoot = "";
 			targets = (
 				T10001 /* OpenWhispr */,
+				T20001 /* OpenWhisprTests */,
 			);
 		};
 /* End PBXProject section */
@@ -205,7 +259,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		S20001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20001 /* HistoryStoreUsageStatisticsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		TD20001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = T10001 /* OpenWhispr */;
+			targetProxy = CP20001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		X10D01 /* Debug */ = {
@@ -308,6 +378,44 @@
 			};
 			name = Release;
 		};
+		X20D02 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.openwhispr.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenWhispr.app/Contents/MacOS/OpenWhispr";
+			};
+			name = Debug;
+		};
+		X20R02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.openwhispr.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenWhispr.app/Contents/MacOS/OpenWhispr";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -325,6 +433,15 @@
 			buildConfigurations = (
 				X10D02 /* Debug */,
 				X10R02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		X20003 /* Build configuration list for PBXNativeTarget "OpenWhisprTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X20D02 /* Debug */,
+				X20R02 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
