@@ -715,6 +715,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
         var focusedRef: CFTypeRef?
         let result = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+
+        // T3 Code accepts keyboard paste, but its Electron AX app may expose no focused element.
+        if result == .noValue, frontApp.bundleIdentifier == "com.t3tools.t3code" {
+            return true
+        }
+
         guard result == .success, let focused = focusedRef else { return false }
 
         let element = focused as! AXUIElement
