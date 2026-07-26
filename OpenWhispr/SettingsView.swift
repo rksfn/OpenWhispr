@@ -54,6 +54,7 @@ struct SettingsContentView: View {
     @AppStorage("baseTone") private var baseTone = "neutral"
     @AppStorage("userStyleDescription") private var styleDescription = ""
     @AppStorage("alwaysEnglish") private var alwaysEnglish = false
+    @AppStorage(DictionaryStore.enabledPreferenceKey) private var dictionaryEnabled = true
     @State private var dictionaryEntries: [String: String] = [:]
     @State private var newOriginal = ""
     @State private var newCorrected = ""
@@ -245,6 +246,15 @@ struct SettingsContentView: View {
 
             // Dictionary
             SectionHeader(title: "Dictionary")
+            SettingsDivider()
+
+            ToggleRow(
+                label: "Enable dictionary",
+                isOn: $dictionaryEnabled,
+                subtitle: dictionaryEnabled
+                    ? "Apply saved corrections and learn from edits"
+                    : "Saved corrections are kept but not applied"
+            )
             SettingsDivider()
 
             if dictionaryEntries.isEmpty {

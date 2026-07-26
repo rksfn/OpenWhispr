@@ -2,6 +2,7 @@ import Foundation
 
 class DictionaryStore {
     static let shared = DictionaryStore()
+    static let enabledPreferenceKey = "dictionaryEnabled"
     private var mappings: [String: String] = [:]
     private let fileURL: URL
 
@@ -14,6 +15,12 @@ class DictionaryStore {
     }
 
     var entries: [String: String] { mappings }
+
+    var isEnabled: Bool {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: Self.enabledPreferenceKey) != nil else { return true }
+        return defaults.bool(forKey: Self.enabledPreferenceKey)
+    }
 
     func add(original: String, corrected: String) {
         let key = original.lowercased()
@@ -30,7 +37,7 @@ class DictionaryStore {
 
     /// Apply all dictionary replacements to text (case-insensitive match, preserves learned casing)
     func apply(to text: String) -> String {
-        guard !mappings.isEmpty else { return text }
+        guard isEnabled, !mappings.isEmpty else { return text }
 
         var result = text
         for (original, corrected) in mappings {

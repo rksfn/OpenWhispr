@@ -57,6 +57,25 @@ open OpenWhispr.xcodeproj
 
 Build and run in Xcode. Whisper model downloads on first launch (~500MB).
 
+### Development installs
+
+To build, replace the installed app, and relaunch it:
+
+```bash
+make dev-install
+```
+
+The command requires an Apple Development certificate and deliberately refuses
+ad-hoc signing. Create the certificate once from **Xcode > Settings > Accounts >
+Manage Certificates**. After the first signed installation, grant Accessibility
+permission to `/Applications/OpenWhispr.app`. Later development builds signed by
+the same certificate keep the same macOS code identity, so the permission should
+persist.
+
+Set `OPENWHISPR_SIGNING_IDENTITY` to a certificate fingerprint to choose a
+specific identity, or `OPENWHISPR_INSTALL_DIR` to use an installation directory
+other than `/Applications`.
+
 ### Download
 
 Pre-built `.dmg` on the [Releases](https://github.com/MrPrinceRawat/OpenWhispr/releases) page.
