@@ -144,21 +144,26 @@ class PillWindow: NSPanel {
     private func updateFrame(for requestedSize: NSSize? = nil) {
         guard let screen = NSScreen.main else { return }
 
-        let size = requestedSize ?? pillState.state.size
-        switch pillState.state {
-        case .idle:
-            hasShadow = false
-        default:
-            hasShadow = true
-        }
+        let visibleSize = requestedSize ?? pillState.state.size
+        let size = canvasSize(for: visibleSize)
+        // Shadows belong to the SwiftUI capsule itself. An NSPanel shadow is always
+        // rectangular and would expose the transparent canvas during transitions.
+        hasShadow = false
 
         let x = (screen.frame.width - size.width) / 2
-        let y: CGFloat = 12
+        let y: CGFloat = 12 - PillView.shadowInsets.bottom
 
         // The panel is just a transparent canvas. It changes size outside the visible
         // animation so the one SwiftUI capsule never gets clipped by a rectangle.
         setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
         hostingView.frame = NSRect(origin: .zero, size: size)
+    }
+
+    private func canvasSize(for visibleSize: NSSize) -> NSSize {
+        NSSize(
+            width: visibleSize.width + PillView.shadowInsets.leading + PillView.shadowInsets.trailing,
+            height: visibleSize.height + PillView.shadowInsets.top + PillView.shadowInsets.bottom
+        )
     }
 }
 
@@ -238,10 +243,13 @@ struct PillView: View {
         }
         .frame(width: visibleSize.width, height: visibleSize.height)
         .animation(.easeOut(duration: Self.transitionDuration), value: state.state)
+        .padding(Self.shadowInsets)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 
     static let transitionDuration = 0.24
     static let contentRevealDelay = 0.17
+    static let shadowInsets = EdgeInsets(top: 8, leading: 12, bottom: 10, trailing: 12)
 
     private var visibleSize: NSSize {
         state.state == .idle ? NSSize(width: 32, height: 6) : state.state.size
