@@ -134,9 +134,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Click idle pill to start locked recording
         pillWindow.onIdleClick = { [weak self] in
             guard let self, self.transcriber.isModelReady, self.recordingPhase == .idle else { return }
-            self.startRecording()
+            // Start directly in the locked visual state. Previously this first queued
+            // `.recording` and then immediately queued `.recordingLocked`, which made
+            // the grow animation depend on which activation path was used.
+            self.startRecording(locked: true)
             self.recordingPhase = .recordingLocked
-            self.pillWindow.setState(.recordingLocked)
         }
     }
 
@@ -392,13 +394,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func startRecording(summarize: Bool = false, question: Bool = false) {
+    private func startRecording(summarize: Bool = false, question: Bool = false, locked: Bool = false) {
         recordingStartTime = Date()
         currentRecordingSummarize = summarize
         currentRecordingQuestion = question
         recorder.start()
         if question {
             pillWindow.setState(.recordingQuestion)
+        } else if locked {
+            pillWindow.setState(summarize ? .recordingLockedSummarize : .recordingLocked)
         } else {
             pillWindow.setState(summarize ? .recordingSummarize : .recording)
         }
