@@ -325,29 +325,17 @@ struct PillView: View {
     }
 
     private var processingPill: some View {
-        HStack(spacing: 8) {
-            ProgressView()
-                .controlSize(.small)
-                .tint(.white)
-            Text("Transcribing…")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .padding(.horizontal, 14)
+        Text("Transcribing…")
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(.white.opacity(0.7))
         .frame(width: 160, height: 32)
         .pillChrome(colorScheme)
     }
 
     private var polishingPill: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.8))
-            Text("Polishing…")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .padding(.horizontal, 14)
+        Text("Formatting…")
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(.white.opacity(0.7))
         .frame(width: 140, height: 32)
         .pillChrome(colorScheme)
     }
