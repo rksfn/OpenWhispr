@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import Combine
 
-enum PillState: Equatable {
+enum PillState: Hashable {
     case idle
     case downloading(progress: Double)
     case recording
@@ -15,6 +15,27 @@ enum PillState: Equatable {
     case error(String)
     case learned(String)
     case answer(String)
+
+    var size: NSSize {
+        switch self {
+        case .idle:
+            NSSize(width: 32, height: 8)
+        case .downloading:
+            NSSize(width: 220, height: 32)
+        case .recording, .recordingLocked, .recordingSummarize, .recordingLockedSummarize, .recordingQuestion:
+            NSSize(width: 200, height: 40)
+        case .processing:
+            NSSize(width: 160, height: 32)
+        case .polishing:
+            NSSize(width: 140, height: 32)
+        case .error:
+            NSSize(width: 280, height: 32)
+        case .learned:
+            NSSize(width: 260, height: 32)
+        case .answer:
+            NSSize(width: 360, height: 72)
+        }
+    }
 }
 
 class PillWindow: NSPanel {
@@ -22,6 +43,7 @@ class PillWindow: NSPanel {
     private var hostingView: NSHostingView<PillView>!
     var onRightClick: (() -> Void)?
     var onIdleClick: (() -> Void)?
+    private var frameTransitionID = UUID()
 
     init() {
         super.init(
@@ -74,11 +96,9 @@ class PillWindow: NSPanel {
         if case .answer(let text) = pillState.state {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
-            pillState.state = .learned("Copied to clipboard")
-            updateFrame()
+            setState(.learned("Copied to clipboard"))
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-                self?.pillState.state = .idle
-                self?.updateFrame()
+                self?.setState(.idle)
             }
             return
         }
@@ -99,8 +119,19 @@ class PillWindow: NSPanel {
 
     func setState(_ state: PillState) {
         DispatchQueue.main.async {
-            self.pillState.state = state
-            self.updateFrame()
+            let previousState = self.pillState.state
+            self.pillState.transition(to: state)
+            self.updateFrame(for: NSSize(
+                width: max(previousState.size.width, state.size.width),
+                height: max(previousState.size.height, state.size.height)
+            ))
+
+            let transitionID = UUID()
+            self.frameTransitionID = transitionID
+            DispatchQueue.main.asyncAfter(deadline: .now() + PillView.transitionDuration) { [weak self] in
+                guard self?.frameTransitionID == transitionID else { return }
+                self?.updateFrame()
+            }
         }
     }
 
@@ -110,54 +141,56 @@ class PillWindow: NSPanel {
         }
     }
 
-    private func updateFrame() {
+    private func updateFrame(for requestedSize: NSSize? = nil) {
         guard let screen = NSScreen.main else { return }
 
-        let size: NSSize
+        let size = requestedSize ?? pillState.state.size
         switch pillState.state {
         case .idle:
-            size = NSSize(width: 32, height: 8)
             hasShadow = false
-        case .downloading:
-            size = NSSize(width: 220, height: 32)
-            hasShadow = true
-        case .recording, .recordingLocked, .recordingSummarize, .recordingLockedSummarize, .recordingQuestion:
-            size = NSSize(width: 200, height: 40)
-            hasShadow = true
-        case .processing:
-            size = NSSize(width: 160, height: 32)
-            hasShadow = true
-        case .polishing:
-            size = NSSize(width: 140, height: 32)
-            hasShadow = true
-        case .error:
-            size = NSSize(width: 280, height: 32)
-            hasShadow = true
-        case .learned:
-            size = NSSize(width: 260, height: 32)
-            hasShadow = true
-        case .answer:
-            size = NSSize(width: 360, height: 72)
+        default:
             hasShadow = true
         }
 
         let x = (screen.frame.width - size.width) / 2
         let y: CGFloat = 12
 
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.2
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            self.animator().setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
-        }
-
+        // The panel is just a transparent canvas. It changes size outside the visible
+        // animation so the one SwiftUI capsule never gets clipped by a rectangle.
+        setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
         hostingView.frame = NSRect(origin: .zero, size: size)
     }
 }
 
 class PillStateModel: ObservableObject {
     @Published var state: PillState = .idle
+    @Published private(set) var contentIsVisible = true
     @Published var isHovered: Bool = false
     @Published var levels: [Float] = Array(repeating: 0, count: 24)
+
+    private var contentRevealID = UUID()
+
+    func transition(to newState: PillState) {
+        let previousState = state
+        let isGrowing = newState.size.width > previousState.size.width || newState.size.height > previousState.size.height
+        let revealID = UUID()
+        contentRevealID = revealID
+
+        if isGrowing, newState != .idle {
+            contentIsVisible = false
+        } else {
+            contentIsVisible = true
+        }
+        state = newState
+
+        guard isGrowing, newState != .idle else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + PillView.contentRevealDelay) { [weak self] in
+            guard self?.contentRevealID == revealID, self?.state == newState else { return }
+            withAnimation(.easeOut(duration: 0.08)) {
+                self?.contentIsVisible = true
+            }
+        }
+    }
 
     func pushLevel(_ level: Float) {
         levels.append(level)
@@ -174,7 +207,8 @@ struct PillView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Group {
+        ZStack {
+            pillShell
             switch state.state {
             case .idle:
                 idlePill
@@ -194,26 +228,50 @@ struct PillView: View {
                 processingPill
             case .polishing:
                 polishingPill
-            case .error(let msg):
-                errorPill(message: msg)
-            case .learned(let msg):
-                learnedPill(message: msg)
-            case .answer(let msg):
-                answerPill(message: msg)
+            case .error(let message):
+                errorPill(message: message)
+            case .learned(let message):
+                learnedPill(message: message)
+            case .answer(let message):
+                answerPill(message: message)
             }
         }
+        .frame(width: visibleSize.width, height: visibleSize.height)
+        .animation(.easeOut(duration: Self.transitionDuration), value: state.state)
     }
 
-    // A visible neutral handle at rest, independent of the desktop appearance.
-    private var idlePill: some View {
+    static let transitionDuration = 0.24
+    static let contentRevealDelay = 0.17
+
+    private var visibleSize: NSSize {
+        state.state == .idle ? NSSize(width: 32, height: 6) : state.state.size
+    }
+
+    private var pillShell: some View {
         Capsule()
-            .fill(PillTheme.idleSurface(for: colorScheme, isHovered: state.isHovered))
+            .fill(state.state == .idle
+                ? PillTheme.idleSurface(for: colorScheme, isHovered: state.isHovered)
+                : PillTheme.surface(for: colorScheme))
+            .overlay(
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [.white.opacity(state.state == .idle ? 0 : 0.09), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            )
             .overlay(
                 Capsule()
                     .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
             )
-            .frame(width: 32, height: 6)
-            .padding(.top, 1)
+            .shadow(color: .black.opacity(state.state == .idle ? 0 : 0.18), radius: 8, y: 3)
+    }
+
+    // A visible neutral handle at rest, independent of the desktop appearance.
+    private var idlePill: some View {
+        Color.clear
             .animation(.easeInOut(duration: 0.15), value: state.isHovered)
             .onHover { hovering in
                 state.isHovered = hovering
@@ -222,16 +280,13 @@ struct PillView: View {
 
     private func downloadingPill(progress: Double) -> some View {
         HStack(spacing: 8) {
-            ProgressView()
-                .controlSize(.small)
-                .tint(.white)
             Text("Downloading model… \(Int(progress * 100))%")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
         }
         .padding(.horizontal, 14)
         .frame(width: 220, height: 32)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var recordingPill: some View {
@@ -249,7 +304,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var recordingLockedPill: some View {
@@ -267,7 +322,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var recordingSummarizePill: some View {
@@ -285,7 +340,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var recordingQuestionPill: some View {
@@ -303,7 +358,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var recordingLockedSummarizePill: some View {
@@ -321,23 +376,23 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 200, height: 40)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var processingPill: some View {
         Text("Transcribing…")
             .font(.system(size: 11, weight: .medium))
-            .foregroundColor(.white.opacity(0.7))
+        .foregroundColor(.white.opacity(0.7))
         .frame(width: 160, height: 32)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private var polishingPill: some View {
         Text("Formatting…")
             .font(.system(size: 11, weight: .medium))
-            .foregroundColor(.white.opacity(0.7))
+        .foregroundColor(.white.opacity(0.7))
         .frame(width: 140, height: 32)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private func errorPill(message: String) -> some View {
@@ -352,7 +407,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 280, height: 32)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private func learnedPill(message: String) -> some View {
@@ -367,7 +422,7 @@ struct PillView: View {
         }
         .padding(.horizontal, 14)
         .frame(width: 260, height: 32)
-        .pillChrome(colorScheme)
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private func answerPill(message: String) -> some View {
@@ -393,11 +448,7 @@ struct PillView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(width: 360)
-        .background(PillTheme.surface(for: colorScheme), in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
-        )
+        .opacity(state.contentIsVisible ? 1 : 0)
     }
 
     private func barHeight(for level: Float) -> CGFloat {
@@ -427,25 +478,5 @@ private enum PillTheme {
 
     static func border(for colorScheme: ColorScheme) -> Color {
         .white.opacity(colorScheme == .dark ? 0.22 : 0.14)
-    }
-}
-
-private extension View {
-    func pillChrome(_ colorScheme: ColorScheme) -> some View {
-        background(PillTheme.surface(for: colorScheme), in: Capsule())
-            .overlay(
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.white.opacity(0.09), .clear],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(PillTheme.border(for: colorScheme), lineWidth: 1)
-            )
     }
 }
