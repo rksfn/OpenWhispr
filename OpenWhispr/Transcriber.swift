@@ -2,8 +2,11 @@ import Foundation
 import WhisperKit
 
 class Transcriber: ObservableObject {
+    private static let modelVariant = "openai_whisper-small"
+
     @Published var modelState: ModelState = .checking
     private var whisperKit: WhisperKit?
+    private let localModelStore = LocalModelStore()
 
     enum ModelState: Equatable {
         case checking
@@ -19,12 +22,24 @@ class Transcriber: ObservableObject {
 
     func checkAndDownload() {
         Task {
-            await MainActor.run { modelState = .downloading(progress: 0) }
-
             do {
+                if let modelFolder = localModelStore.downloadedModelFolder(
+                    for: Self.modelVariant
+                ) {
+                    do {
+                        try await loadModel(from: modelFolder)
+                        await MainActor.run { modelState = .ready }
+                        return
+                    } catch {
+                        print("Cached model could not be loaded; downloading a fresh copy: \(error)")
+                    }
+                }
+
+                await MainActor.run { modelState = .downloading(progress: 0) }
+
                 // Download with progress callback
                 let modelFolder = try await WhisperKit.download(
-                    variant: "openai_whisper-small",
+                    variant: Self.modelVariant,
                     progressCallback: { progress in
                         let fraction = progress.fractionCompleted
                         Task { @MainActor in
@@ -33,24 +48,30 @@ class Transcriber: ObservableObject {
                     }
                 )
 
-                // Init from downloaded model
-                let whisper = try await WhisperKit(
-                    modelFolder: modelFolder.path,
-                    computeOptions: .init(audioEncoderCompute: .cpuAndNeuralEngine, textDecoderCompute: .cpuAndNeuralEngine)
-                )
-                self.whisperKit = whisper
-
-                // Warmup: run a silent transcription to compile CoreML model
-                let warmupURL = FileManager.default.temporaryDirectory.appendingPathComponent("murmur_warmup.wav")
-                self.generateSilentWav(at: warmupURL, duration: 0.5)
-                _ = try? await whisper.transcribe(audioPath: warmupURL.path)
-                try? FileManager.default.removeItem(at: warmupURL)
-
+                try await loadModel(from: modelFolder)
                 await MainActor.run { modelState = .ready }
             } catch {
                 await MainActor.run { modelState = .error("Failed to load model: \(error.localizedDescription)") }
             }
         }
+    }
+
+    private func loadModel(from modelFolder: URL) async throws {
+        let whisper = try await WhisperKit(
+            modelFolder: modelFolder.path,
+            computeOptions: .init(
+                audioEncoderCompute: .cpuAndNeuralEngine,
+                textDecoderCompute: .cpuAndNeuralEngine
+            )
+        )
+        whisperKit = whisper
+
+        // Warmup: run a silent transcription to compile CoreML model.
+        let warmupURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("murmur_warmup.wav")
+        generateSilentWav(at: warmupURL, duration: 0.5)
+        _ = try? await whisper.transcribe(audioPath: warmupURL.path)
+        try? FileManager.default.removeItem(at: warmupURL)
     }
 
     private func generateSilentWav(at url: URL, duration: Double) {
