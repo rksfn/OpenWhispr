@@ -667,7 +667,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Returns true if auto-paste succeeded, false if text was only copied to clipboard.
+    /// Returns true if auto-paste was attempted, false if text was only copied to clipboard.
+    ///
+    /// We always simulate Cmd+V when Accessibility is trusted. Electron, GPUI (Zed), and other
+    /// custom UI toolkits often omit or misreport focused text fields in the AX tree, so gating
+    /// on AX text focus falsely blocks paste in the apps people dictate into most.
     @discardableResult
     private func pasteText(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
@@ -676,12 +680,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
-        // Check if we can auto-paste
-        let trusted = AXIsProcessTrusted()
-        let hasFocus = trusted && frontmostAppHasTextFocus()
-
-        guard trusted && hasFocus else {
-            // Can't auto-paste — text is on clipboard, tell the user
+        guard AXIsProcessTrusted() else {
+            // Can't synthesize Cmd+V without Accessibility — leave text on clipboard
             pillWindow.setState(.error("Copied — press Cmd+V to paste"))
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
                 self?.pillWindow.setState(.idle)
@@ -689,7 +689,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return false
         }
 
-        // Auto-paste via simulated Cmd+V
+        // Auto-paste via simulated Cmd+V into whatever currently has keyboard focus
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             let source = CGEventSource(stateID: .hidSystemState)
             let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true)
@@ -711,49 +711,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         return true
-    }
-
-    /// Check if the frontmost app has a focused element that accepts text input
-    private func frontmostAppHasTextFocus() -> Bool {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication else { return false }
-        let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
-        var focusedRef: CFTypeRef?
-        let result = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
-
-        // T3 Code accepts keyboard paste, but its Electron AX app may expose no focused element.
-        if result == .noValue, frontApp.bundleIdentifier == "com.t3tools.t3code" {
-            return true
-        }
-
-        guard result == .success, let focused = focusedRef else { return false }
-
-        let element = focused as! AXUIElement
-
-        // Check the role of the focused element
-        var roleRef: CFTypeRef?
-        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef)
-        if let role = roleRef as? String {
-            let textRoles: Set<String> = [
-                kAXTextFieldRole as String,
-                kAXTextAreaRole as String,
-                "AXSearchField",
-                kAXComboBoxRole as String,
-                "AXWebArea",        // Web content (browsers, Electron apps)
-            ]
-            if textRoles.contains(role) { return true }
-        }
-
-        // Fallback: check if the element has a value attribute that's a string (editable text)
-        var valueRef: CFTypeRef?
-        let valueResult = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef)
-        if valueResult == .success, valueRef is String {
-            // Also check it's not read-only by seeing if AXInsertionPointLineNumber exists
-            var insertionRef: CFTypeRef?
-            let insertionResult = AXUIElementCopyAttributeValue(element, "AXInsertionPointLineNumber" as CFString, &insertionRef)
-            if insertionResult == .success { return true }
-        }
-
-        return false
     }
 
     // MARK: - Edit Monitoring (Custom Dictionary Learning)
